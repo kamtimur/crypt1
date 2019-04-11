@@ -1,0 +1,30 @@
+Foo DEFINITIONS ::= BEGIN
+
+	RSASignedFile ::= SEQUENCE 
+	{
+		keyset SET
+		{
+			key SEQUENCE
+			{
+				algid	OCTET STRING,
+				test	UTF8String,
+				keydata SEQUENCE
+				{
+					module INTEGER,
+					exp	INTEGER
+					
+				},
+				param SEQUENCE{},
+				ciphertext SEQUENCE
+				{
+					c INTEGER
+				}
+			}
+		},
+		last SEQUENCE{}
+	}
+
+END
+
+
+

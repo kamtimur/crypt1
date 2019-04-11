@@ -1,0 +1,34 @@
+Foo DEFINITIONS ::= BEGIN
+
+	RSAEncodedFile ::= SEQUENCE 
+	{
+		keyset SET
+		{
+			key SEQUENCE
+			{
+				algid	OCTET STRING,
+				test	UTF8String,
+				keydata SEQUENCE
+				{
+					module INTEGER,
+					exp	INTEGER
+					
+				},
+				param SEQUENCE{},
+				ciphertext SEQUENCE
+				{
+					c INTEGER
+				}
+			}
+		},
+		last SEQUENCE
+		{
+			algid	OCTET STRING,
+			length INTEGER
+		}
+	}
+
+END
+
+
+
