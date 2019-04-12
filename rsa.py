@@ -7,15 +7,13 @@ from sympy import mod_inverse
 
 deskey = "000102030405060708090A0B0C0D0E0F0001020304050607"
 
-exp = int("C7A5F75C51CF2A716DA054332286215", 16);
-
-secret = int("1CC0B27F41D50F6FC35DEA2AB420DEBD", 16);
-
-module = int("2378343E4BDCC3AB1B98F47997E72B77", 16);
-
 rsa_enc_file = asn1tools.compile_files('schemes/rsa_enc_file.asn')
 
 rsa_sign_file = asn1tools.compile_files('schemes/rsa_sign_file.asn')
+
+rsa_pub_file = asn1tools.compile_files('schemes/rsa_pub.asn')
+
+rsa_priv_file = asn1tools.compile_files('schemes/rsa_priv.asn')
 
 
 def jacob(a, n):
@@ -77,15 +75,15 @@ def GenPrime(bitlen):
     tmp = next_simple_after(tmp)
     while tmp.bit_length() < bitlen:
         tmp = next_simple_after(tmp)
-        print(tmp.bit_length())
-    print(tmp)
+        # print(tmp.bit_length())
+    # print(tmp)
     return tmp
 
 
 def GenRsaKey(exp):
     p = 1
     q = 1
-    bitlen = 512
+    bitlen = 34
     while p == q:
         p = GenPrime(bitlen)
         q = GenPrime(bitlen)
@@ -93,8 +91,39 @@ def GenRsaKey(exp):
     euc = (p - 1) * (q - 1)
     d = mod_inverse(exp, euc)
 
+    pub_key_file = open("pub_key.dat", 'wb')
+    encoded = rsa_pub_file.encode('PublicRSAKey', {
+        'module': module,
+        'exp': exp
+    })
 
-def EncFile(file):
+    pub_key_file.write(encoded)
+    pub_key_file.close()
+
+    priv_key_file = open("priv_key.dat", 'wb')
+    encoded = rsa_priv_file.encode('PrivateRSAKey', {
+        'modulus': module,
+        'publicExponent': exp,
+        'privateExponent':d,
+        'prime1':p,
+        'prime2':q
+    })
+
+    priv_key_file.write(encoded)
+    priv_key_file.close()
+    return "pub_key.dat", "priv_key.dat"
+
+
+
+def EncFile(file, pubkey):
+    key_file = open(pubkey, 'rb')
+    r = key_file.read()
+    f = rsa_pub_file.decode('PublicRSAKey', r)
+    module = f['module']
+    exp = f['exp']
+    key_file.close()
+
+
     crypt = chilkat.CkCrypt2()
 
     success = crypt.UnlockComponent("Anything for 30-day trial")
@@ -162,8 +191,15 @@ def EncFile(file):
     return out_file, file + "_key.dat"
 
 
-def DecFile(file, key_file):
-    # Read file with encrypted 3DES key
+def DecFile(file, key_file, priv_key):
+
+    priv_key_file = open(priv_key, 'rb')
+    r = priv_key_file.read()
+    f = rsa_priv_file.decode('PrivateRSAKey', r)
+    module = f['modulus']
+    exp = f['publicExponent']
+    secret = f['privateExponent']
+    priv_key_file.close()
 
     # index
     key_file = open(key_file, 'rb')
@@ -221,7 +257,17 @@ def DecFile(file, key_file):
     return out_file
 
 
-def GenerateSign(file):
+def GenerateSign(file, priv_key):
+
+    priv_key_file = open(priv_key, 'rb')
+    r = priv_key_file.read()
+    f = rsa_priv_file.decode('PrivateRSAKey', r)
+    module = f['modulus']
+    exp = f['publicExponent']
+    secret = f['privateExponent']
+    priv_key_file.close()
+
+
     signeble_file = open(file, "rb")
     sing_file = open(file + "_sign.dat", 'wb')
     readFile = signeble_file.read()
@@ -249,7 +295,14 @@ def GenerateSign(file):
     return file + "_sign.dat"
 
 
-def AuthSign(file, sign):
+def AuthSign(file, sign, pubkey):
+    key_file = open(pubkey, 'rb')
+    r = key_file.read()
+    f = rsa_pub_file.decode('PublicRSAKey', r)
+    module = f['module']
+    exp = f['exp']
+    key_file.close()
+
     sign_file = open(sign, 'rb')
     sign_data = sign_file.read()
     sign_str = rsa_sign_file.decode('RSASignedFile', sign_data)
@@ -267,8 +320,8 @@ def AuthSign(file, sign):
         return True
 
 
-GenRsaKey(65537)
-encfile, keyfile = EncFile("otvety.txt")
-DecFile(encfile, keyfile)
-sign_file = GenerateSign(encfile)
-AuthSign(encfile, sign_file)
+pub, priv = GenRsaKey(65537)
+encfile, keyfile = EncFile("otvety.txt", pub)
+DecFile(encfile, keyfile, priv)
+sign_file = GenerateSign(encfile, priv)
+AuthSign(encfile, sign_file, pub)

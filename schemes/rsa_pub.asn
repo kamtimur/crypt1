@@ -1,0 +1,7 @@
+Foo DEFINITIONS ::= BEGIN
+	PublicRSAKey ::= SEQUENCE
+	{
+		module INTEGER,
+		exp	INTEGER
+	}
+END

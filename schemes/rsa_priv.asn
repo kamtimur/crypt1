@@ -1,0 +1,10 @@
+Foo DEFINITIONS ::= BEGIN
+	PrivateRSAKey ::= SEQUENCE
+	{
+	  modulus           INTEGER,
+      publicExponent    INTEGER,  
+      privateExponent   INTEGER, 
+      prime1            INTEGER,  
+      prime2            INTEGER
+	}
+END
