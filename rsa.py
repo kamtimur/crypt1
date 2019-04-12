@@ -82,17 +82,17 @@ def GenPrime(bitlen):
     return tmp
 
 
-def GenRsaKey(exp):
+def GenRsaKey():
     p = 1
     q = 1
-    bitlen = 512
+    bitlen = 128
+    exp = 65537
     while p == q:
         p = GenPrime(bitlen)
         q = GenPrime(bitlen)
     module = p * q
     euc = (p - 1) * (q - 1)
-    d = mod_inverse(exp, euc)
-
+    secret = mod_inverse(exp, euc)
 
 def EncFile(file):
     crypt = chilkat.CkCrypt2()
@@ -267,7 +267,7 @@ def AuthSign(file, sign):
         return True
 
 
-GenRsaKey(65537)
+# GenRsaKey()
 encfile, keyfile = EncFile("otvety.txt")
 DecFile(encfile, keyfile)
 sign_file = GenerateSign(encfile)
